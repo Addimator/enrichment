@@ -1,0 +1,41 @@
+enrichment:
+  type: object
+  properties:
+    goatools:
+      type: object
+      properties:
+        activate:
+          type: boolean
+        fdr_genes:
+          type: number
+        fdr_go_terms:
+          type: number
+      required:
+        - fdr_genes
+        - fdr_go_terms
+    fgsea:
+      type: object
+      properties:
+        activate:
+          type: boolean
+        gene_sets_file:
+          type: string
+        fdr_gene_set:
+          type: number
+        eps:
+          type: number
+      required:
+        - gene_sets_file
+        - fdr_gene_set
+        - eps
+    spia:
+      type: object
+      properties:
+        activate:
+          type: boolean
+        pathway_database:
+          type: string
+        orgDb: 
+          type: string
+      required:
+        - pathway_database
