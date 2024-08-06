@@ -29,7 +29,7 @@ rule get_spia_db:
     retries: 3
     cache: True
     script:
-        "../scripts/get-spia-db.R"
+        "scripts/get-spia-db.R"
 
 
 # TODO consider cellphonedb for receptor ligand interaction (Sarah Teichmann, Nature Methods?)
