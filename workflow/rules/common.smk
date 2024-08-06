@@ -1,5 +1,5 @@
 # from snakemake.utils import validate
-# import pandas as pd
+import pandas as pd
 import yaml
 
 # from pathlib import Path
@@ -94,10 +94,10 @@ import yaml
 #     return _get_labels
 
 
-# def get_model(wildcards):
-#     if wildcards.model == "all":
-#         return {"full": None}
-#     return config["diffexp"]["models"][wildcards.model]
+def get_model(wildcards):
+    if wildcards.model == "all":
+        return {"full": None}
+    return config["diffexp"]["models"][wildcards.model]
 
 
 # def is_single_end(sample, unit):
@@ -131,17 +131,17 @@ import yaml
 #             yield f"results/trimmed/{item.sample}-{item.unit}.2.fastq.gz"
 
 
-# def get_model_samples(wildcards):
-#     samples = pd.read_csv(config["samples"], sep="\t", dtype=str, comment="#")
-#     units = pd.read_csv(config["units"], sep="\t", dtype=str, comment="#")
-#     sample_file = units.merge(samples, on="sample")
-#     sample_file["sample_name"] = sample_file.apply(
-#         lambda row: "{}-{}".format(row["sample"], row["unit"]), axis=1
-#     )
-#     gps = config["diffexp"]["models"][wildcards.model]["primary_variable"]
-#     sample_groups = sample_file.loc[sample_file[gps].notnull(), ["sample_name"]]
-#     samples = sample_groups["sample_name"].values
-#     return samples
+def get_model_samples(wildcards):
+    samples = pd.read_csv(config["samples"], sep="\t", dtype=str, comment="#")
+    units = pd.read_csv(config["units"], sep="\t", dtype=str, comment="#")
+    sample_file = units.merge(samples, on="sample")
+    sample_file["sample_name"] = sample_file.apply(
+        lambda row: "{}-{}".format(row["sample"], row["unit"]), axis=1
+    )
+    gps = config["diffexp"]["models"][wildcards.model]["primary_variable"]
+    sample_groups = sample_file.loc[sample_file[gps].notnull(), ["sample_name"]]
+    samples = sample_groups["sample_name"].values
+    return samples
 
 
 # def get_trimmed(wildcards):
@@ -266,6 +266,20 @@ def all_input(wildcards):
                 ],
                 model=config["diffexp"]["models"],
             )
+        )
+
+    # meta comparisons
+    if config["meta_comparisons"]["activate"]:
+        wanted_input.extend(
+            directory(
+                expand(
+                    "results/datavzrd-reports/{report_type}_meta_comparison_{meta_comp}",
+                    report_type=["go_terms", "pathways"],
+                    meta_comp=lookup(
+                        dpath="meta_comparisons/comparisons", within=config
+                    ),
+                )
+            ),
         )
 
     return wanted_input

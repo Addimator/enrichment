@@ -1,10 +1,23 @@
 from pathlib import Path
+from snakemake.utils import min_version
+
+min_version("8.13.0")
 
 
 configfile: "config/config.yaml"
 
 
+report: "report/workflow.rst"
+
+
+# this container defines the underlying OS for each job when using the workflow
+# with --use-conda --use-singularity
+container: "docker://continuumio/miniconda3"
+
+
 include: "rules/common.smk"
+include: "rules/datavzrd.smk"
+include: "rules/meta_comparisons.smk"
 
 
 rule all:
@@ -152,7 +165,7 @@ rule download_go_obo:
     params:
         download=config["resources"]["ontology"]["gene_ontology"],
     conda:
-        "../envs/curl.yaml"
+        "envs/curl.yaml"
     log:
         "logs/resources/curl.download_go_obo.log",
     shell:
@@ -176,7 +189,7 @@ rule goatools_go_enrichment:
         gene_fdr=lambda wc: wc.gene_fdr.replace("-", "."),
         go_term_fdr=lambda wc: wc.go_term_fdr.replace("-", "."),
     conda:
-        "../envs/goatools.yaml"
+        "envs/goatools.yaml"
     log:
         "logs/goatools/tables_and_plots.{model}.go_term_enrichment.gene_fdr_{gene_fdr}.go_term_fdr_{go_term_fdr}.log",
     script:
