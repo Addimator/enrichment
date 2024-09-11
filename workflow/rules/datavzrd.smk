@@ -67,8 +67,6 @@ rule meta_compare_go_terms_datavzrd:
             patterns=["index.html"],
             labels=lambda wildcards: get_meta_compare_labels,
         ),
-    params:
-        pathway_db=config["enrichment"]["spia"]["pathway_database"],
     log:
         "logs/datavzrd-report/meta_comp_go_terms.{meta_comp}.log",
     wrapper:
