@@ -26,30 +26,5 @@ rule meta_compare_enrichment:
         ),
     conda:
         "../envs/pystats.yaml"
-    notebook:
-        "../scripts/compare_enrichment.py.ipynb"
-
-
-rule meta_compare_pathways:
-    input:
-        expand(
-            "results/tables/pathways/{model}.pathways.tsv",
-            model=lookup(
-                dpath="meta_comparisons/comparisons/{meta_comp}/items/*/*",
-                within=config,
-            ),
-        ),
-    output:
-        "results/tables/pathways/meta_compare_{meta_comp}.tsv",
-        "results/meta_comparison/pathways/{meta_comp}.json",
-    log:
-        notebook="logs/meta_compare_pathways/{meta_comp}.ipynb",
-    params:
-        labels=lookup(
-            dpath="meta_comparisons/comparisons/{meta_comp}/items/*",
-            within=config,
-        ),
-    conda:
-        "../envs/pystats.yaml"
-    notebook:
-        "../scripts/compare_pathways.py.ipynb"
+    script:
+        "../scripts/compare_enrichment.py"

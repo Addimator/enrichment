@@ -13,52 +13,6 @@ rule postprocess_go_enrichment:
         "../scripts/postprocess_go_enrichment.py"
 
 
-# Postprocessing Spia Data
-rule postprocess_spia:
-    input:
-        spia="results/tables/pathways/{model}.pathways.tsv",
-    output:
-        "results/tables/pathways/{model}.pathways_postprocessed.tsv",
-    conda:
-        "../envs/pandas.yaml"
-    params:
-        model=get_model,
-    log:
-        "logs/yte/postprocess_spia/{model}.log",
-    script:
-        "../scripts/postprocess_spia.py"
-
-
-# Generating SPIA Datavzrd Report
-rule spia_datavzrd:
-    input:
-        config=workflow.source_path("../resources/datavzrd/spia-template.yaml"),
-        # files required for rendering the given configs
-        vega_circle=workflow.source_path(
-            "../resources/custom_vega_plots/circle_diagram_genes.json"
-        ),
-        spia_table="results/tables/pathways/{model}.pathways_postprocessed.tsv",
-        vega_waterfall=workflow.source_path(
-            "../resources/custom_vega_plots/waterfall_plot_study_items.json"
-        ),
-    output:
-        report(
-            directory("results/datavzrd-reports/spia-{model}"),
-            htmlindex="index.html",
-            caption="../report/spia.rst",
-            category="Pathway enrichment",
-            patterns=["index.html"],
-            labels={"model": "{model}"},
-        ),
-    log:
-        "logs/datavzrd-report/spia-{model}/spia-{model}.log",
-    params:
-        offer_excel=lookup(within=config, dpath="report/offer_excel", default=False),
-        pathway_db=config["enrichment"]["spia"]["pathway_database"],
-    wrapper:
-        "v3.13.8/utils/datavzrd"
-
-
 # Generating GO Enrichment Datavzrd Report
 rule go_enrichment_datavzrd:
     input:
@@ -96,30 +50,26 @@ rule go_enrichment_datavzrd:
 
 
 # Generating Meta Comparison Datavzrd Reports
-rule meta_compare_datavzrd:
+rule meta_compare_go_terms_datavzrd:
     input:
         config=lambda wildcards: workflow.source_path(
-            f"../resources/datavzrd/meta_comparison-{wildcards.method}-template.yaml"
+            f"../resources/datavzrd/meta_comparison-go_terms-template.yaml"
         ),
-        table="results/tables/{method}/meta_compare_{meta_comp}.tsv",
-        plot="results/meta_comparison/{method}/{meta_comp}.json",
+        table="results/tables/go_terms/meta_compare_{meta_comp}.tsv",
+        plot="results/meta_comparison/go_terms/{meta_comp}.json",
     output:
         report(
-            directory("results/datavzrd-reports/{method}_meta_comparison_{meta_comp}"),
+            directory("results/datavzrd-reports/go_terms_meta_comparison_{meta_comp}"),
             htmlindex="index.html",
             caption="../report/meta_compare.rst",
             category="Comparisons",
             subcategory="{meta_comp}",
             patterns=["index.html"],
-            labels=lambda wildcards: get_meta_compare_labels(
-                method=f"{wildcards.method.capitalize()}: "
-            )(wildcards),
+            labels=lambda wildcards: get_meta_compare_labels,
         ),
     params:
         pathway_db=config["enrichment"]["spia"]["pathway_database"],
-    wildcard_constraints:
-        method="go_terms|pathways",
     log:
-        "logs/datavzrd-report/meta_comp_{method}.{meta_comp}.log",
+        "logs/datavzrd-report/meta_comp_go_terms.{meta_comp}.log",
     wrapper:
         "v3.13.8/utils/datavzrd"
