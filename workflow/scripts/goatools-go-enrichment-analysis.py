@@ -31,7 +31,7 @@ sig_genes = all_genes[all_genes["qval"] < fdr_level_gene]
 
 # initialize GOEA object
 fdr_level_go_term = float(snakemake.params.go_term_fdr)
-model = snakemake.params.model
+effect_col = snakemake.params.effect_col
 
 goeaobj = GOEnrichmentStudyNS(
     # list of 'population' of genes looked at in total
@@ -169,8 +169,11 @@ if goea_results_sig:
         "\w+(?=,|$)", lambda m: ensembl_id_to_symbol.get(m.group(0))
     )
     # Append fold change values to gene names
+    # gene_to_fold_change = dict(
+    #     zip(sig_genes["ext_gene"], sig_genes.filter(regex=("b_" + model)).iloc[:, 0])
+    # )
     gene_to_fold_change = dict(
-        zip(sig_genes["ext_gene"], sig_genes.filter(regex=("b_" + model)).iloc[:, 0])
+        zip(sig_genes["ext_gene"], sig_genes.filter(regex=(effect_col)).iloc[:, 0])
     )
     go_sig_terms_sorted["study_items"] = go_sig_terms_sorted.study_items.astype("str")
     go_sig_terms_sorted["study_items"] = go_sig_terms_sorted.study_items.str.split(",")

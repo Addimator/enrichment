@@ -110,26 +110,39 @@ rule download_go_obo:
         "( curl --silent -o {output} {params.download} ) 2> {log}"
 
 
+input_prefix = lookup(dpath="pathvars/input_prefix", within=config)
+output_prefix = lookup(dpath="pathvars/output_prefix", within=config)
+file_name = lookup(dpath="pathvars/file_name", within=config)
+
+
 rule goatools_go_enrichment:
     input:
         obo="resources/ontology/gene_ontology.obo",
         ens_gene_to_go="resources/ontology/ens_gene_to_go.tsv",
-        diffexp="results/tables/diffexp/{model}.genes-representative.diffexp.tsv",
+        # diffexp="results/tables/diffexp/{model}.genes-representative.diffexp.tsv",
+        # diffexp="results/dmr_calls/BC02-ref-sorted/genes_transcripts/chipseeker_postprocessed.tsv",
+        diffexp=f"{input_prefix}{file_name}.tsv",
     output:
-        enrichment="results/tables/go_terms/{model}.go_term_enrichment.gene_fdr_{gene_fdr}.go_term_fdr_{go_term_fdr}.tsv",
-        enrichment_sig_terms="results/tables/go_terms/{model}.go_term_enrichment.gene_fdr_{gene_fdr}.go_term_fdr_{go_term_fdr}.sig_terms.tsv",
-        plot=expand(
-            "results/plots/go_terms/{{model}}.go_term_enrichment_{ns}.gene_fdr_{{gene_fdr}}.go_term_fdr_{{go_term_fdr}}.pdf",
-            ns=["BP", "CC", "MF"],
-        ),
+        enrichment=f"{output_prefix}{file_name}.tsv",
+        # enrichment="results/tables/go_terms/{model}.go_term_enrichment.gene_fdr_{gene_fdr}.go_term_fdr_{go_term_fdr}.tsv",
+        # enrichment_sig_terms="results/tables/go_terms/{model}.go_term_enrichment.gene_fdr_{gene_fdr}.go_term_fdr_{go_term_fdr}.sig_terms.tsv",
+        # plot=expand(
+        # "results/plots/go_terms/{{model}}.go_term_enrichment_{ns}.gene_fdr_{{gene_fdr}}.go_term_fdr_{{go_term_fdr}}.pdf",
+        # ns=["BP", "CC", "MF"],
+        # ),
+        enrichment_sig_terms=f"{output_prefix}{file_name}.sig_terms.tsv",
+        plot=expand(f"{output_prefix}_{{ns}}_{file_name}.tsv", ns=["BP", "CC", "MF"]),
     params:
         species=get_bioc_species_name(),
-        model=lambda w: config["diffexp"]["models"][w.model]["primary_variable"],
-        gene_fdr=lambda wc: wc.gene_fdr.replace("-", "."),
-        go_term_fdr=lambda wc: wc.go_term_fdr.replace("-", "."),
+        # model=lambda w: config["diffexp"]["models"][w.model]["primary_variable"],
+        effect_col="mean_methylation_difference",
+        gene_fdr=0.05,
+        go_term_fdr=0.05,
+        # gene_fdr=lambda wc: wc.gene_fdr.replace("-", "."),
+        # go_term_fdr=lambda wc: wc.go_term_fdr.replace("-", "."),
     conda:
         "../envs/goatools.yaml"
     log:
-        "logs/goatools/tables_and_plots.{model}.go_term_enrichment.gene_fdr_{gene_fdr}.go_term_fdr_{go_term_fdr}.log",
+        f"logs/goatools/tables_and_plots.{file_name}.log",
     script:
         "../scripts/goatools-go-enrichment-analysis.py"

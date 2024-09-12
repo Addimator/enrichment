@@ -21,6 +21,14 @@ include: "rules/enrichment.smk"
 include: "rules/meta_comparisons.smk"
 
 
+"""
+Damit das enrichment Modul klappt muss man die tsv mit den Effekten speichern unter:
+"results/tables/diffexp/{model}.genes-representative.diffexp.tsv"
+
+Es muss die Spalten 'ens_gene', 'ext_gene', 'qval' geben und die Spalte mit dem Effekt muss uebergeben werden
+"""
+
+
 rule all:
     input:
         all_input,
