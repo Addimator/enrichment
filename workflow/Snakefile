@@ -22,10 +22,9 @@ include: "rules/meta_comparisons.smk"
 
 
 """
-Damit das enrichment Modul klappt muss man die tsv mit den Effekten speichern unter:
-"results/tables/diffexp/{model}.genes-representative.diffexp.tsv"
-
 Es muss die Spalten 'ens_gene', 'ext_gene', 'qval' geben und die Spalte mit dem Effekt muss uebergeben werden
+In plot_name muss die wildcard {ns} enthalten sein
+
 """
 
 

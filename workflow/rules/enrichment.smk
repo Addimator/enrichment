@@ -119,25 +119,22 @@ def get_effect_col(wildcards, config):
         return effect_col_config["static_value"]
 
 
-input_prefix = lookup(dpath="pathvars/input_prefix", within=config)
-input_name = lookup(dpath="pathvars/input_name", within=config)
-output_prefix = lookup(dpath="pathvars/output_prefix", within=config)
-output_name = lookup(dpath="pathvars/output_name", within=config)
-plot_prefix = lookup(dpath="pathvars/plot_prefix", within=config)
-plot_name = lookup(dpath="pathvars/plot_name", within=config)
-logfile = lookup(dpath="pathvars/log_name", within=config)
+input_file = lookup(dpath="pathvars/input_file", within=config)
+output_file = lookup(dpath="pathvars/output_file", within=config)
+plot_file = lookup(dpath="pathvars/plot_file", within=config)
+log_file = lookup(dpath="pathvars/log_file", within=config)
 
 
 rule goatools_go_enrichment:
     input:
         obo="resources/ontology/gene_ontology.obo",
         ens_gene_to_go="resources/ontology/ens_gene_to_go.tsv",
-        diffexp=f"{input_prefix}{input_name}.tsv",
+        diffexp=f"{input_file}.tsv",
     output:
-        enrichment=f"{output_prefix}{output_name}.tsv",
-        enrichment_sig_terms=f"{output_prefix}{output_name}.sig_terms.tsv",
+        enrichment=f"{output_file}.tsv",
+        enrichment_sig_terms=f"{output_file}.sig_terms.tsv",
         plot=expand(
-            f"{plot_prefix}{plot_name}.pdf",
+            f"{plot_file}.pdf",
             ns=["BP", "CC", "MF"],
         ),
     params:
@@ -148,6 +145,6 @@ rule goatools_go_enrichment:
     conda:
         "../envs/goatools.yaml"
     log:
-        f"{logfile}.log",
+        f"{log_file}.log",
     script:
         "../scripts/goatools-go-enrichment-analysis.py"

@@ -49,3 +49,18 @@ meta_comparisons:
         - Y: model_Y
       # Define label for datavzrd report
       label: model X vs. model Y
+
+# Paths for the enrichment
+pathvars:
+  input_file:
+    "results/dmr_calls/{group}/genes_transcripts/chipseeker_postprocessed"
+  output_file:
+    "results/enrichment/{group}/genes_transcripts/go_term_enrichment.gene_fdr_{gene_fdr}.go_term_fdr_{go_term_fdr}"
+  plot_file:
+    "results/enrichment/{{group}}/plots/go_term_enrichment_{ns}.gene_fdr_{{gene_fdr}}.go_term_fdr_{{go_term_fdr}}"
+  log_file:
+    "logs/goatools/tables_and_plots.{group}.go_term_enrichment.gene_fdr_{gene_fdr}.go_term_fdr_{go_term_fdr}"
+  effect_col:
+    dynamic: false
+    dynamic_expression: ""
+    static_value: "mean_methylation_difference"  
