@@ -1,53 +1,48 @@
-## gene set enrichment analysis
+# gene set enrichment analysis
 
 
 rule fgsea:
     input:
         samples="results/sleuth/{model}.samples.tsv",
-        diffexp="results/tables/diffexp/{model}.genes-representative.diffexp.tsv",
+        input_effects=f"{input_fgsea}.tsv",
         gene_sets=config["enrichment"]["fgsea"]["gene_sets_file"],
         common_src=workflow.source_path("../scripts/common.R"),
     output:
         enrichment=report(
-            "results/tables/fgsea/{model}.all-gene-sets.tsv",
+            f"{output_fgsea}.all-gene-sets.tsv",
             caption="../report/fgsea-table-all.rst",
             category="Gene set enrichment analysis",
-            labels={"model": "{model}"},
         ),
         rank_ties=report(
-            "results/tables/fgsea/{model}.rank-ties.tsv",
+            f"{output_fgsea}.rank-ties.tsv",
             caption="../report/fgsea-rank-ties.rst",
             category="Gene set enrichment analysis",
-            labels={"model": "{model}"},
         ),
         significant=report(
-            "results/tables/fgsea/{model}.sig-gene-sets.tsv",
+            f"{output_fgsea}.sig-gene-sets.tsv",
             caption="../report/fgsea-table-significant.rst",
             category="Gene set enrichment analysis",
-            labels={"model": "{model}"},
         ),
         plot=report(
-            "results/plots/fgsea/{model}.table-plot.pdf",
+            f"{plots_fgsea}.table-plot.pdf",
             caption="../report/fgsea-table-plot.rst",
             category="Gene set enrichment analysis",
-            labels={"model": "{model}"},
         ),
         plot_collapsed=report(
-            "results/plots/fgsea/{model}.collapsed_pathways.table-plot.pdf",
+            f"{plots_fgsea}.collapsed_pathways.table-plot.pdf",
             caption="../report/fgsea-collapsed-table-plot.rst",
             category="Gene set enrichment analysis",
-            labels={"model": "{model}"},
         ),
     params:
         bioc_species_pkg=bioc_species_pkg,
         model=get_model,
         gene_set_fdr=config["enrichment"]["fgsea"]["fdr_gene_set"],
         eps=config["enrichment"]["fgsea"]["eps"],
-        covariate=lambda w: config["diffexp"]["models"][w.model]["primary_variable"],
+        covariate=lambda wildcards: get_effect_col(wildcards, config),
     conda:
         enrichment_env
     log:
-        "logs/tables/fgsea/{model}.gene-set-enrichment.log",
+        f"logs/enrichment/fgsea/{logs_fgsea}.log",
     threads: 25
     script:
         "../scripts/fgsea.R"
@@ -56,30 +51,29 @@ rule fgsea:
 rule fgsea_plot_gene_sets:
     input:
         samples="results/sleuth/{model}.samples.tsv",
-        diffexp="results/tables/diffexp/{model}.genes-representative.diffexp.tsv",
+        input_effects=f"{input_fgsea}.tsv",
         gene_sets=config["enrichment"]["fgsea"]["gene_sets_file"],
-        sig_gene_sets="results/tables/fgsea/{model}.sig-gene-sets.tsv",
+        sig_gene_sets=f"{output_fgsea}.sig-gene-sets.tsv",
         common_src=workflow.source_path("../scripts/common.R"),
     output:
         report(
-            directory("results/plots/fgsea/{model}"),
+            directory(f"{plots_fgsea}"),
             patterns=["{model}.{gene_set}.gene-set-plot.pdf"],
             caption="../report/plot-fgsea-gene-set.rst",
             category="Gene set enrichment analysis",
-            labels={"model": "{model}"},
         ),
     params:
         model=get_model,
-        covariate=lambda w: config["diffexp"]["models"][w.model]["primary_variable"],
+        covariate=lambda wildcards: get_effect_col(wildcards, config),
     conda:
         enrichment_env
     log:
-        "logs/plots/fgsea/{model}.plot_fgsea_gene_set.log",
+        f"logs/enrichment/fgsea_plot_gene_sets/{logs_fgsea}.log",
     script:
         "../scripts/plot-fgsea-gene-sets.R"
 
 
-## gene ontology term enrichment analysis
+gene ontology term enrichment analysis
 
 
 rule ens_gene_to_go:
@@ -92,7 +86,7 @@ rule ens_gene_to_go:
     conda:
         enrichment_env
     log:
-        "logs/resources/ens_gene_to_go.log",
+        "logs/enrichment/resources/ens_gene_to_go.log",
     script:
         "../scripts/ens_gene_to_go.R"
 
@@ -105,13 +99,13 @@ rule download_go_obo:
     conda:
         "../envs/curl.yaml"
     log:
-        "logs/resources/curl.download_go_obo.log",
+        "logs/enrichment/resources/curl.download_go_obo.log",
     shell:
         "( curl --silent -o {output} {params.download} ) 2> {log}"
 
 
 def get_effect_col(wildcards, config):
-    effect_col_config = lookup(dpath="pathvars/effect_col", within=config)
+    effect_col_config = lookup(dpath="enrichment/effect_col", within=config)
 
     if effect_col_config["dynamic"]:
         return eval(effect_col_config["dynamic_expression"])
@@ -119,22 +113,16 @@ def get_effect_col(wildcards, config):
         return effect_col_config["static_value"]
 
 
-input_file = lookup(dpath="pathvars/input_file", within=config)
-output_file = lookup(dpath="pathvars/output_file", within=config)
-plot_file = lookup(dpath="pathvars/plot_file", within=config)
-log_file = lookup(dpath="pathvars/log_file", within=config)
-
-
 rule goatools_go_enrichment:
     input:
         obo="resources/ontology/gene_ontology.obo",
         ens_gene_to_go="resources/ontology/ens_gene_to_go.tsv",
-        diffexp=f"{input_file}.tsv",
+        input_effects=f"{input_goatools}.tsv",
     output:
-        enrichment=f"{output_file}.tsv",
-        enrichment_sig_terms=f"{output_file}.sig_terms.tsv",
+        enrichment=f"{output_goatools}.tsv",
+        enrichment_sig_terms=f"{output_goatools}.sig_terms.tsv",
         plot=expand(
-            f"{plot_file}.pdf",
+            f"{plots_goatools}.pdf",
             ns=["BP", "CC", "MF"],
         ),
     params:
@@ -145,6 +133,6 @@ rule goatools_go_enrichment:
     conda:
         "../envs/goatools.yaml"
     log:
-        f"{log_file}.log",
+        f"logs/enrichment/goatools_go_enrichment/{logs_goatools}.log",
     script:
         "../scripts/goatools-go-enrichment-analysis.py"

@@ -10,9 +10,27 @@ enrichment:
           type: number
         fdr_go_terms:
           type: number
+        pathvars:
+          type: object
+          properties:
+            input_file:
+              type: string
+            output_file:
+              type: string
+            plot_file:
+              type: string
+            datavzrd_file:
+              type: string
+            log_file_name:
+              type: string
+            wildcards:
+              type: object
+              additionalProperties:
+                type: string  
       required:
         - fdr_genes
         - fdr_go_terms
+        - pathvars
     fgsea:
       type: object
       properties:
@@ -24,7 +42,48 @@ enrichment:
           type: number
         eps:
           type: number
+        pathvars:
+          type: object
+          properties:
+            input_file:
+              type: string
+            output_file:
+              type: string
+            plot_file:
+              type: string
+            log_file_name:
+              type: string
+            wildcards:
+              type: object
+              additionalProperties:
+                type: string  
       required:
         - gene_sets_file
         - fdr_gene_set
         - eps
+        - pathvars
+    effect_col:
+      type: object
+      properties:
+        dynamic: boolean
+        dynammic_expression: string
+        static_value: string
+
+
+meta_comparisons:
+  type: object
+  properties:
+    activate: boolean
+    comparisons:
+      type: object
+      additionalProperties:
+        model_X_vs_model_Y:
+          type: object
+          properties:
+            items:
+              type: object
+              properties:
+                - X: string
+                - Y: string
+              # Define label for datavzrd report
+            label: string

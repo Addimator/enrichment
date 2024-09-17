@@ -26,6 +26,17 @@ enrichment:
     activate: false
     fdr_genes: 0.05
     fdr_go_terms: 0.05
+    # All important paths 
+    pathvars:
+      input_file: "path/to/table/with/effects_{gene_fdr}"
+      output_file: "save/goatools-result-tables/here_{gene_fdr}"
+      plot_file: "save/goatools-result-plots/here_{ns}_{{gene_fdr}}" # Must contain ns as wildcard and all other wildcards in double curved brackets
+      datavzrd_file: "save/datavzrd-tables/here_{gene_fdr}"
+      log_file_name: "{sample}" # Must contain all wildcards from the other files
+      # Declare all used wildcards. You can use python expressions which will be evaluated
+      wildcards:
+        gene_fdr: "str(config['enrichment']['goatools']['fdr_genes']).replace('.', '-')"
+        ns: '["BP", "CC", "MF"]' # Always use this
   fgsea:
     # tool is only run if set to `true`
     activate: false
@@ -34,6 +45,21 @@ enrichment:
     fdr_gene_set: 0.05
     # minimum achievable p-value  (equivalent to the reciprocal of the number of permutations, see fgsea docs)
     eps: 1.0e-50
+    # All important paths 
+    pathvars:
+      input_file: "path/to/table/with/effects_{gene_fdr}"
+      output_file: "save/goatools-result-tables/here_{gene_fdr}"
+      plot_file: "save/goatools-result-plots/here_{ns}_{{gene_fdr}}"
+      log_file_name: "{sample}" # Must contain all wildcards from the other files
+      # Declare all used wildcards. You can use python expressions which will be evaluated
+      wildcards:
+        gene_fdr: "str(config['enrichment']['goatools']['fdr_genes']).replace('.', '-')"
+  # Name of the column in the input files
+  effect_col:
+    # If name of col depends on wildcards set dynamic to true and give the expression to compute it. Else give the name in static_value.  
+    dynamic: false
+    dynamic_expression: ""
+    static_value: "col_name"
 
 meta_comparisons:
   # comparison is only run if set to `true`
@@ -49,18 +75,3 @@ meta_comparisons:
         - Y: model_Y
       # Define label for datavzrd report
       label: model X vs. model Y
-
-# Paths for the enrichment
-pathvars:
-  input_file:
-    "results/dmr_calls/{group}/genes_transcripts/chipseeker_postprocessed"
-  output_file:
-    "results/enrichment/{group}/genes_transcripts/go_term_enrichment.gene_fdr_{gene_fdr}.go_term_fdr_{go_term_fdr}"
-  plot_file:
-    "results/enrichment/{{group}}/plots/go_term_enrichment_{ns}.gene_fdr_{{gene_fdr}}.go_term_fdr_{{go_term_fdr}}"
-  log_file:
-    "logs/goatools/tables_and_plots.{group}.go_term_enrichment.gene_fdr_{gene_fdr}.go_term_fdr_{go_term_fdr}"
-  effect_col:
-    dynamic: false
-    dynamic_expression: ""
-    static_value: "mean_methylation_difference"  

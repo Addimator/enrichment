@@ -2,8 +2,8 @@ import polars as pl
 import polars.selectors as cs
 import altair as alt
 
-diffexp_x = pl.read_csv(snakemake.input[0], separator="\t").lazy()
-diffexp_y = pl.read_csv(snakemake.input[1], separator="\t").lazy()
+effects_x = pl.read_csv(snakemake.input[0], separator="\t").lazy()
+effects_y = pl.read_csv(snakemake.input[1], separator="\t").lazy()
 label_x = list(snakemake.params.labels[0].keys())[0]
 label_y = list(snakemake.params.labels[1].keys())[0]
 
@@ -57,10 +57,10 @@ def prepare(df):
     return df
 
 
-prepared_diffexp_x = prepare(diffexp_x)
-prepared_diffexp_y = prepare(diffexp_y)
+prepared_effects_x = prepare(effects_x)
+prepared_effects_y = prepare(effects_y)
 combined = (
-    prepared_diffexp_x.join(prepared_diffexp_y, on=["GO", "term"], suffix="_y")
+    prepared_effects_x.join(prepared_effects_y, on=["GO", "term"], suffix="_y")
     .with_columns(pl.min_horizontal("p_fdr_bh", "p_fdr_bh_y").alias("p_fdr_bh_min"))
     .filter(pl.col("p_fdr_bh_min") <= 0.05)
     .rename(

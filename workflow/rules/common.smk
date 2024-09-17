@@ -1,24 +1,29 @@
 import yaml
 import pandas as pd
+import itertools
+
+input_goatools = lookup(dpath="enrichment/goatools/pathvars/input_file", within=config)
+output_goatools = lookup(
+    dpath="enrichment/goatools/pathvars/output_file", within=config
+)
+plots_goatools = lookup(dpath="enrichment/goatools/pathvars/plot_file", within=config)
+datavzrd_goatools = lookup(
+    dpath="enrichment/goatools/pathvars/datavzrd_file", within=config
+)
+logs_goatools = lookup(
+    dpath="enrichment/goatools/pathvars/log_file_name", within=config
+)
+
+input_fgsea = lookup(dpath="enrichment/fgsea/pathvars/input_file", within=config)
+output_fgsea = lookup(dpath="enrichment/fgsea/pathvars/output_file", within=config)
+plots_fgsea = lookup(dpath="enrichment/fgsea/pathvars/plot_file", within=config)
+logs_fgsea = lookup(dpath="enrichment/fgsea/pathvars/log_file_name", within=config)
 
 
 def get_model(wildcards):
     if wildcards.model == "all":
         return {"full": None}
     return config["diffexp"]["models"][wildcards.model]
-
-
-def get_model_samples(wildcards):
-    samples = pd.read_csv(config["samples"], sep="\t", dtype=str, comment="#")
-    units = pd.read_csv(config["units"], sep="\t", dtype=str, comment="#")
-    sample_file = units.merge(samples, on="sample")
-    sample_file["sample_name"] = sample_file.apply(
-        lambda row: "{}-{}".format(row["sample"], row["unit"]), axis=1
-    )
-    gps = config["diffexp"]["models"][wildcards.model]["primary_variable"]
-    sample_groups = sample_file.loc[sample_file[gps].notnull(), ["sample_name"]]
-    samples = sample_groups["sample_name"].values
-    return samples
 
 
 def get_bioc_species_name():
@@ -49,6 +54,57 @@ bioc_species_pkg = get_bioc_species_pkg()
 enrichment_env = render_enrichment_env()
 
 
+# Since the input and ouput files are dynamic there is a dynamic number of wildcards
+def eval_wildcards(wildcard_str, local_vars):
+    return eval(wildcard_str, {}, local_vars)
+
+
+def get_dynamic_wildcards(method):
+    wildcard_definitions = config["enrichment"][method]["pathvars"]["wildcards"]
+    wildcard_values = {}
+
+    for wildcard_name, wildcard_expr in wildcard_definitions.items():
+        evaluated_value = eval(wildcard_expr)
+        if not isinstance(evaluated_value, list):
+            evaluated_value = [evaluated_value]
+
+        wildcard_values[wildcard_name] = evaluated_value
+
+    wildcard_combinations = list(itertools.product(*wildcard_values.values()))
+
+    wildcard_combinations_named = [
+        dict(zip(wildcard_values.keys(), comb)) for comb in wildcard_combinations
+    ]
+
+    return wildcard_combinations_named
+
+
+# We have to create the wildcards out of the given enrichment paths and the dynamic number of wildcards
+def create_paths(method):
+    # All possible combinations of wildcards
+    combinations = get_dynamic_wildcards(method)
+
+    paths = set()
+
+    # For every wildcard combination create a path
+    for combo in combinations:
+        if method == "goatools":
+            input_path = input_goatools.format(**combo)
+            output_path = output_goatools.format(**combo)
+            datavzrd_path = datavzrd_goatools.format(**combo)
+            plot_path = (
+                plots_goatools.replace("{{", "{").replace("}}", "}").format(**combo)
+            )
+            paths.update([f"{datavzrd_path}"])
+        elif method == "fgsea":
+            input_path = input_fgsea.format(**combo)
+            output_path = output_fgsea.format(**combo)
+            plot_path = plots_fgsea.format(**combo)
+
+        paths.update([f"{input_path}.tsv", f"{output_path}.tsv", f"{plot_path}.pdf"])
+    return paths
+
+
 def all_input(wildcards):
     """
     Function defining all requested inputs for the rule all (below).
@@ -58,37 +114,11 @@ def all_input(wildcards):
 
     # request goatools if 'activated' in config.yaml
     if config["enrichment"]["goatools"]["activate"]:
-        wanted_input.extend(
-            expand(
-                [
-                    "results/tables/go_terms/{model}.go_term_enrichment.gene_fdr_{gene_fdr}.go_term_fdr_{go_term_fdr}.tsv",
-                    "results/plots/go_terms/{model}.go_term_enrichment_{go_ns}.gene_fdr_{gene_fdr}.go_term_fdr_{go_term_fdr}.pdf",
-                    "results/datavzrd-reports/go_enrichment-{model}_{gene_fdr}.go_term_fdr_{go_term_fdr}",
-                ],
-                model=config["diffexp"]["models"],
-                go_ns=["BP", "CC", "MF"],
-                gene_fdr=str(config["enrichment"]["goatools"]["fdr_genes"]).replace(
-                    ".", "-"
-                ),
-                go_term_fdr=str(
-                    config["enrichment"]["goatools"]["fdr_go_terms"]
-                ).replace(".", "-"),
-            )
-        )
+        wanted_input.extend(create_paths("goatools"))
 
-    # request fgsea if 'activated' in config.yaml
-    if config["enrichment"]["fgsea"]["activate"]:
-        wanted_input.extend(
-            expand(
-                [
-                    "results/tables/fgsea/{model}.all-gene-sets.tsv",
-                    "results/tables/fgsea/{model}.sig-gene-sets.tsv",
-                    "results/plots/fgsea/{model}.table-plot.pdf",
-                    "results/plots/fgsea/{model}",
-                ],
-                model=config["diffexp"]["models"],
-            )
-        )
+    # # request fgsea if 'activated' in config.yaml
+    # if config["enrichment"]["fgsea"]["activate"]:
+    #     wanted_input.extend(create_paths("fgsea"))
 
     # meta comparisons
     if config["meta_comparisons"]["activate"]:

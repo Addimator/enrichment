@@ -1,17 +1,26 @@
 # Postprocessing GO Enrichment Data
 rule postprocess_go_enrichment:
     input:
-        enrichment="results/tables/go_terms/{model}.go_term_enrichment.gene_fdr_{gene_fdr}.go_term_fdr_{go_term_fdr}.tsv",
-        significant_terms="results/tables/go_terms/{model}.go_term_enrichment.gene_fdr_{gene_fdr}.go_term_fdr_{go_term_fdr}.sig_terms.tsv",
+        enrichment=f"{output_goatools}.tsv",
+        significant_terms=f"{output_goatools}.sig_terms.tsv",
     output:
-        "results/tables/go_terms/{model}.go_term_enrichment.gene_fdr_{gene_fdr}.go_term_sig_study_fdr_{go_term_fdr}.tsv",
+        enrichment=f"postprocessed_{output_goatools}.tsv",
     conda:
         "../envs/polars.yaml"
     log:
-        "logs/yte/postprocess_go_enrichment/{model}_{gene_fdr}.go_term_fdr_{go_term_fdr}.log",
+        f"logs/enrichment/postprocess_go_enrichment/{logs_goatools}.log",
     script:
         "../scripts/postprocess_go_enrichment.py"
 
+
+def get_dynamic_labels(wildcards):
+    """
+    Dynamically generate labels from all wildcards without hardcoding.
+    The wildcards object is a dict-like structure, so we can iterate through its keys and values.
+    """
+    # Dynamically create labels dictionary from all wildcard keys and values
+    print(f"Available wildcards: {wildcards}")
+    return {key: value for key, value in wildcards.items()}
 
 # Generating GO Enrichment Datavzrd Report
 rule go_enrichment_datavzrd:
@@ -23,28 +32,27 @@ rule go_enrichment_datavzrd:
         vega_waterfall=workflow.source_path(
             "../resources/custom_vega_plots/waterfall_plot_study_items.json"
         ),
-        enrichment="results/tables/go_terms/{model}.go_term_enrichment.gene_fdr_{gene_fdr}.go_term_sig_study_fdr_{go_term_fdr}.tsv",
+        enrichment=f"postprocessed_{output_goatools}.tsv",
     output:
         report(
-            directory(
-                "results/datavzrd-reports/go_enrichment-{model}_{gene_fdr}.go_term_fdr_{go_term_fdr}"
-            ),
+            # directory(lambda wildcards: expand("{datavzrd_goatools}", datavzrd_goatools=wildcards.datavzrd_goatools)),
+            directory(datavzrd_goatools),
             htmlindex="index.html",
             caption="../report/go-enrichment-sig_terms.rst",
             category="GO term enrichment",
-            subcategory="{model}",
+            # subcategory="{model}",
             patterns=["index.html"],
-            labels={
-                "model": "{model}",
-                "gene_fdr": "{gene_fdr}",
-                "go_term_fdr": "{go_term_fdr}",
-            },
+            labels=lambda wildcards: get_dynamic_labels(wildcards),
+            # labels={
+            #     "model": "{model}",
+            #     "gene_fdr": "{gene_fdr}",
+            #     "go_term_fdr": "{go_term_fdr}",
+            # },
         ),
     log:
-        "logs/datavzrd-report/go_enrichment-{model}/go_enrichment-{model}_{gene_fdr}.go_term_fdr_{go_term_fdr}.log",
+        f"logs/enrichment/go_enrichment_datavzrd/{logs_goatools}.log",
     params:
         offer_excel=lookup(within=config, dpath="report/offer_excel", default=False),
-        samples=get_model_samples,
     wrapper:
         "v3.13.8/utils/datavzrd"
 

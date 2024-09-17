@@ -25,6 +25,10 @@ include: "rules/meta_comparisons.smk"
 Es muss die Spalten 'ens_gene', 'ext_gene', 'qval' geben und die Spalte mit dem Effekt muss uebergeben werden
 In plot_name muss die wildcard {ns} enthalten sein
 
+TODO:
+FGSEA benoetigt sleuth output. Soll der auch in das enrichment modul?
+Alle rsts
+Report categories, subcategories, labels die auf wcs basieren (Vor allem fgsea_plot_gene_sets weil dort der NAme darauf basiert)
 """
 
 

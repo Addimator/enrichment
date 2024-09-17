@@ -18,7 +18,7 @@ rule meta_compare_enrichment:
         "results/tables/go_terms/meta_compare_{meta_comp}.tsv",
         "results/meta_comparison/go_terms/{meta_comp}.json",
     log:
-        notebook="logs/meta_compare_enrichment/{meta_comp}.ipynb",
+        notebook="logs/enrichment/meta_compare_enrichment/{meta_comp}.ipynb",
     params:
         labels=lookup(
             dpath="meta_comparisons/comparisons/{meta_comp}/items/*",

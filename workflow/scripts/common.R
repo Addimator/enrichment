@@ -25,6 +25,6 @@ get_prefix_col <- function(prefix, col_names) {
     }
 
     if (!found) {
-        stop(str_c("Invalid covariate '", covariate, "', not found in diffexp table."))
+        stop(str_c("Invalid covariate '", covariate, "', not found in input table with effects."))
     }
 }

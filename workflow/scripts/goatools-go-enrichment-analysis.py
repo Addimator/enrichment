@@ -9,6 +9,7 @@ from goatools.obo_parser import GODag
 from goatools.anno.idtogos_reader import IdToGosReader
 from goatools.goea.go_enrichment_ns import GOEnrichmentStudyNS
 from goatools.godag_plot import plot_results  # , plot_goid2goobj, plot_gos
+
 # read in directed acyclic graph of GO terms / IDs
 obodag = GODag(snakemake.input.obo)
 
@@ -23,8 +24,8 @@ ns2assoc = objanno.get_ns2assc()
 for nspc, id2gos in ns2assoc.items():
     print("{NS} {N:,} annotated genes".format(NS=nspc, N=len(id2gos)))
 
-# read gene diffexp table
-all_genes = pd.read_table(snakemake.input.diffexp)
+# read gene effects table
+all_genes = pd.read_table(snakemake.input.input_effects)
 # select genes significantly differentially expressed according to BH FDR of sleuth
 fdr_level_gene = float(snakemake.params.gene_fdr)
 sig_genes = all_genes[all_genes["qval"] < fdr_level_gene]
@@ -169,9 +170,6 @@ if goea_results_sig:
         "\w+(?=,|$)", lambda m: ensembl_id_to_symbol.get(m.group(0))
     )
     # Append fold change values to gene names
-    # gene_to_fold_change = dict(
-    #     zip(sig_genes["ext_gene"], sig_genes.filter(regex=("b_" + model)).iloc[:, 0])
-    # )
     gene_to_fold_change = dict(
         zip(sig_genes["ext_gene"], sig_genes.filter(regex=(effect_col)).iloc[:, 0])
     )
