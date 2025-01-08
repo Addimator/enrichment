@@ -20,10 +20,12 @@ plots_fgsea = lookup(dpath="enrichment/fgsea/pathvars/plot_file", within=config)
 logs_fgsea = lookup(dpath="enrichment/fgsea/pathvars/log_file_name", within=config)
 
 
-def get_model(wildcards):
-    if wildcards.model == "all":
-        return {"full": None}
-    return config["diffexp"]["models"][wildcards.model]
+def get_effect_col(wc, config):
+    effect_col_config = lookup(dpath="enrichment/effect_col", within=config)
+    if effect_col_config["dynamic"]:
+        return eval(effect_col_config["dynamic_expression"])
+    else:
+        return effect_col_config["static_value"]
 
 
 def get_bioc_species_name():
@@ -89,19 +91,28 @@ def create_paths(method):
     # For every wildcard combination create a path
     for combo in combinations:
         if method == "goatools":
-            input_path = input_goatools.format(**combo)
+            # input_path = input_goatools.format(**combo)
             output_path = output_goatools.format(**combo)
             datavzrd_path = datavzrd_goatools.format(**combo)
             plot_path = (
                 plots_goatools.replace("{{", "{").replace("}}", "}").format(**combo)
             )
-            paths.update([f"{datavzrd_path}"])
+            paths.update([f"{datavzrd_path}", f"{output_path}.tsv", f"{plot_path}.pdf"])
         elif method == "fgsea":
-            input_path = input_fgsea.format(**combo)
+            # input_path = input_fgsea.format(**combo)
             output_path = output_fgsea.format(**combo)
             plot_path = plots_fgsea.format(**combo)
+            paths.update(
+                [
+                    f"{output_path}.all-gene-sets.tsv",
+                    f"{output_path}.sig-gene-sets.tsv",
+                    f"{plot_path}.table-plot.pdf",
+                    f"{plot_path}",
+                ]
+            )
 
-        paths.update([f"{input_path}.tsv", f"{output_path}.tsv", f"{plot_path}.pdf"])
+        # paths.update([f"{input_path}.tsv", f"{output_path}.tsv", f"{plot_path}.pdf"])
+
     return paths
 
 
@@ -111,14 +122,13 @@ def all_input(wildcards):
     """
 
     wanted_input = []
+    # request fgsea if 'activated' in config.yaml
+    if config["enrichment"]["fgsea"]["activate"]:
+        wanted_input.extend(create_paths("fgsea"))
 
     # request goatools if 'activated' in config.yaml
     if config["enrichment"]["goatools"]["activate"]:
         wanted_input.extend(create_paths("goatools"))
-
-    # # request fgsea if 'activated' in config.yaml
-    # if config["enrichment"]["fgsea"]["activate"]:
-    #     wanted_input.extend(create_paths("fgsea"))
 
     # meta comparisons
     if config["meta_comparisons"]["activate"]:

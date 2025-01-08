@@ -26,15 +26,16 @@ enrichment:
     activate: false
     fdr_genes: 0.05
     fdr_go_terms: 0.05
-    # All important paths 
+    # All important paths (without file formats)
     pathvars:
-      input_file: "path/to/table/with/effects_{gene_fdr}"
-      output_file: "save/goatools-result-tables/here_{gene_fdr}"
-      plot_file: "save/goatools-result-plots/here_{ns}_{{gene_fdr}}" # Must contain ns as wildcard and all other wildcards in double curved brackets
-      datavzrd_file: "save/datavzrd-tables/here_{gene_fdr}"
+      input_file: "path/to/table/{sample}/effects_{gene_fdr}" # Must be a tsv including columns qval, ens_gene and ext_gene
+      output_file: "save/goatools-result-tables/{sample}/here_{gene_fdr}"
+      plot_file: "save/goatools-result-plots/{{sample}}/here_{ns}_{{gene_fdr}}" # Must contain ns as wildcard and all other wildcards in double curved brackets
+      datavzrd_file: "save/datavzrd-tables/{sample}/here_{gene_fdr}"
       log_file_name: "{sample}" # Must contain all wildcards from the other files
-      # Declare all used wildcards. You can use python expressions which will be evaluated
+      # Declare all wildcards used in the paths. You can use python expressions which will be evaluated
       wildcards:
+        sample: '["sample1", "sample2"]'
         gene_fdr: "str(config['enrichment']['goatools']['fdr_genes']).replace('.', '-')"
         ns: '["BP", "CC", "MF"]' # Always use this
   fgsea:
@@ -45,21 +46,21 @@ enrichment:
     fdr_gene_set: 0.05
     # minimum achievable p-value  (equivalent to the reciprocal of the number of permutations, see fgsea docs)
     eps: 1.0e-50
-    # All important paths 
+    # All important paths (without file formats)
     pathvars:
-      input_file: "path/to/table/with/effects_{gene_fdr}"
-      output_file: "save/goatools-result-tables/here_{gene_fdr}"
-      plot_file: "save/goatools-result-plots/here_{ns}_{{gene_fdr}}"
+      input_file: "path/to/table/{sample}/with/effects" # Must be a tsv including columns qval, pval, mean_obs, target_id, ens_gene, ext_gene
+      output_file: "save/goatools-result-tables/{sample}/here"
+      plot_file: "save/goatools-result-plots/{sample}/here"
       log_file_name: "{sample}" # Must contain all wildcards from the other files
       # Declare all used wildcards. You can use python expressions which will be evaluated
       wildcards:
-        gene_fdr: "str(config['enrichment']['goatools']['fdr_genes']).replace('.', '-')"
+        sample: '["sample1", "sample2"]'
   # Name of the column in the input files
   effect_col:
-    # If name of col depends on wildcards set dynamic to true and give the expression to compute it. Else give the name in static_value.  
-    dynamic: false
-    dynamic_expression: ""
-    static_value: "col_name"
+    # If name of column depends on wildcards set dynamic to true and give the python expression to compute it. Else give the name in static_value.  
+    dynamic: true
+    dynamic_expression: "f\"b_{config[wc.model][\"primary_variable\"]}\""
+    static_value: ""
 
 meta_comparisons:
   # comparison is only run if set to `true`

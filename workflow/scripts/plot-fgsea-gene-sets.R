@@ -12,7 +12,7 @@ source(snakemake@input[["common_src"]])
 
 gene_sets <- gmtPathways(snakemake@input[["gene_sets"]])
 sig_gene_sets <- read_tsv(snakemake@input[["sig_gene_sets"]])
-effects <- read_tsv(snakemake@input[["input_effects"]]) %>%
+diffexp <- read_tsv(snakemake@input[["diffexp"]]) %>%
                   drop_na(ext_gene) %>%
                   mutate(ext_gene = str_to_upper(ext_gene)) %>%
                   group_by(ext_gene) %>%
@@ -21,9 +21,9 @@ effects <- read_tsv(snakemake@input[["input_effects"]]) %>%
                   mutate(ens_gene = str_c(ens_gene, collapse=",")) %>%
                   distinct()
 
-signed_pi <- get_prefix_col("signed_pi_value", colnames(effects))
+signed_pi <- get_prefix_col("signed_pi_value", colnames(diffexp))
 
-ranked_genes <- effects %>%
+ranked_genes <- diffexp %>%
                   dplyr::select(ext_gene, !!signed_pi) %>%
                   deframe()
 

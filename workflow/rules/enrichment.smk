@@ -1,9 +1,6 @@
-# gene set enrichment analysis
-
-
 rule fgsea:
     input:
-        samples="results/sleuth/{model}.samples.tsv",
+        # samples=f"{sleuth_sample}",
         input_effects=f"{input_fgsea}.tsv",
         gene_sets=config["enrichment"]["fgsea"]["gene_sets_file"],
         common_src=workflow.source_path("../scripts/common.R"),
@@ -12,33 +9,38 @@ rule fgsea:
             f"{output_fgsea}.all-gene-sets.tsv",
             caption="../report/fgsea-table-all.rst",
             category="Gene set enrichment analysis",
+            labels=lambda wildcards: get_dynamic_labels(wildcards),
         ),
         rank_ties=report(
             f"{output_fgsea}.rank-ties.tsv",
             caption="../report/fgsea-rank-ties.rst",
             category="Gene set enrichment analysis",
+            labels=lambda wildcards: get_dynamic_labels(wildcards),
         ),
         significant=report(
             f"{output_fgsea}.sig-gene-sets.tsv",
             caption="../report/fgsea-table-significant.rst",
             category="Gene set enrichment analysis",
+            labels=lambda wildcards: get_dynamic_labels(wildcards),
         ),
         plot=report(
             f"{plots_fgsea}.table-plot.pdf",
             caption="../report/fgsea-table-plot.rst",
             category="Gene set enrichment analysis",
+            labels=lambda wildcards: get_dynamic_labels(wildcards),
         ),
         plot_collapsed=report(
             f"{plots_fgsea}.collapsed_pathways.table-plot.pdf",
             caption="../report/fgsea-collapsed-table-plot.rst",
             category="Gene set enrichment analysis",
+            labels=lambda wildcards: get_dynamic_labels(wildcards),
         ),
     params:
         bioc_species_pkg=bioc_species_pkg,
-        model=get_model,
+        # model=get_model,
+        effect_col=lambda wildcards: get_effect_col(wildcards, config),
         gene_set_fdr=config["enrichment"]["fgsea"]["fdr_gene_set"],
         eps=config["enrichment"]["fgsea"]["eps"],
-        covariate=lambda wildcards: get_effect_col(wildcards, config),
     conda:
         enrichment_env
     log:
@@ -50,7 +52,7 @@ rule fgsea:
 
 rule fgsea_plot_gene_sets:
     input:
-        samples="results/sleuth/{model}.samples.tsv",
+        # samples="results/sleuth/{group}.samples.tsv",
         input_effects=f"{input_fgsea}.tsv",
         gene_sets=config["enrichment"]["fgsea"]["gene_sets_file"],
         sig_gene_sets=f"{output_fgsea}.sig-gene-sets.tsv",
@@ -58,13 +60,13 @@ rule fgsea_plot_gene_sets:
     output:
         report(
             directory(f"{plots_fgsea}"),
-            patterns=["{model}.{gene_set}.gene-set-plot.pdf"],
+            patterns=["{*.gene-set-plot.pdf"],
             caption="../report/plot-fgsea-gene-set.rst",
             category="Gene set enrichment analysis",
+            labels=lambda wildcards: get_dynamic_labels(wildcards),
         ),
     params:
-        model=get_model,
-        covariate=lambda wildcards: get_effect_col(wildcards, config),
+        effect_col=lambda wildcards: get_effect_col(wildcards, config),
     conda:
         enrichment_env
     log:
@@ -73,7 +75,7 @@ rule fgsea_plot_gene_sets:
         "../scripts/plot-fgsea-gene-sets.R"
 
 
-gene ontology term enrichment analysis
+# gene ontology term enrichment analysis
 
 
 rule ens_gene_to_go:
@@ -104,15 +106,6 @@ rule download_go_obo:
         "( curl --silent -o {output} {params.download} ) 2> {log}"
 
 
-def get_effect_col(wildcards, config):
-    effect_col_config = lookup(dpath="enrichment/effect_col", within=config)
-
-    if effect_col_config["dynamic"]:
-        return eval(effect_col_config["dynamic_expression"])
-    else:
-        return effect_col_config["static_value"]
-
-
 rule goatools_go_enrichment:
     input:
         obo="resources/ontology/gene_ontology.obo",
@@ -125,6 +118,10 @@ rule goatools_go_enrichment:
             f"{plots_goatools}.pdf",
             ns=["BP", "CC", "MF"],
         ),
+    wildcard_constraints:
+        # go_term_fdr=".*(?<!_postprocessed)$"
+        go_term_fdr="[^_]+",  # Einschränkung, dass 'go_term_fdr' keine Unterstriche enthält
+        gene_fdr="[^_]+",
     params:
         species=get_bioc_species_name(),
         effect_col=lambda wildcards: get_effect_col(wildcards, config),

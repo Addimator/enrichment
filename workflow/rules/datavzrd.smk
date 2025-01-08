@@ -4,7 +4,7 @@ rule postprocess_go_enrichment:
         enrichment=f"{output_goatools}.tsv",
         significant_terms=f"{output_goatools}.sig_terms.tsv",
     output:
-        enrichment=f"postprocessed_{output_goatools}.tsv",
+        enrichment=f"{output_goatools}_postprocessed.tsv",
     conda:
         "../envs/polars.yaml"
     log:
@@ -19,7 +19,6 @@ def get_dynamic_labels(wildcards):
     The wildcards object is a dict-like structure, so we can iterate through its keys and values.
     """
     # Dynamically create labels dictionary from all wildcard keys and values
-    print(f"Available wildcards: {wildcards}")
     return {key: value for key, value in wildcards.items()}
 
 # Generating GO Enrichment Datavzrd Report
@@ -32,7 +31,7 @@ rule go_enrichment_datavzrd:
         vega_waterfall=workflow.source_path(
             "../resources/custom_vega_plots/waterfall_plot_study_items.json"
         ),
-        enrichment=f"postprocessed_{output_goatools}.tsv",
+        enrichment=f"{output_goatools}_postprocessed.tsv",
     output:
         report(
             # directory(lambda wildcards: expand("{datavzrd_goatools}", datavzrd_goatools=wildcards.datavzrd_goatools)),
@@ -40,7 +39,7 @@ rule go_enrichment_datavzrd:
             htmlindex="index.html",
             caption="../report/go-enrichment-sig_terms.rst",
             category="GO term enrichment",
-            # subcategory="{model}",
+            subcategory="{model}",
             patterns=["index.html"],
             labels=lambda wildcards: get_dynamic_labels(wildcards),
             # labels={
