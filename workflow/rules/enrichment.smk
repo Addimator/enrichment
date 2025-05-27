@@ -129,7 +129,7 @@ rule goatools_go_enrichment:
         go_term_fdr=config["enrichment"]["goatools"]["fdr_go_terms"],
     conda:
         "../envs/goatools.yaml"
-    log:
-        f"logs/enrichment/goatools_go_enrichment/{logs_goatools}.log",
+    # log:
+    #     f"logs/enrichment/goatools.log",
     script:
         "../scripts/goatools-go-enrichment-analysis.py"

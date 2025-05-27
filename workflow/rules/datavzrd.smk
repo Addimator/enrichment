@@ -39,14 +39,9 @@ rule go_enrichment_datavzrd:
             htmlindex="index.html",
             caption="../report/go-enrichment-sig_terms.rst",
             category="GO term enrichment",
-            subcategory="{model}",
+            # subcategory=lambda wildcards: wildcards,
             patterns=["index.html"],
             labels=lambda wildcards: get_dynamic_labels(wildcards),
-            # labels={
-            #     "model": "{model}",
-            #     "gene_fdr": "{gene_fdr}",
-            #     "go_term_fdr": "{go_term_fdr}",
-            # },
         ),
     log:
         f"logs/enrichment/go_enrichment_datavzrd/{logs_goatools}.log",
