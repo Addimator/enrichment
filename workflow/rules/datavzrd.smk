@@ -8,18 +8,10 @@ rule postprocess_go_enrichment:
     conda:
         "../envs/polars.yaml"
     log:
-        f"logs/enrichment/postprocess_go_enrichment/{logs_goatools}.log",
+        f"logs/enrichment/postprocess_go_enrichment/{output_goatools}.log",
     script:
         "../scripts/postprocess_go_enrichment.py"
 
-
-def get_dynamic_labels(wildcards):
-    """
-    Dynamically generate labels from all wildcards without hardcoding.
-    The wildcards object is a dict-like structure, so we can iterate through its keys and values.
-    """
-    # Dynamically create labels dictionary from all wildcard keys and values
-    return {key: value for key, value in wildcards.items()}
 
 # Generating GO Enrichment Datavzrd Report
 rule go_enrichment_datavzrd:
@@ -41,10 +33,10 @@ rule go_enrichment_datavzrd:
             category="GO term enrichment",
             # subcategory=lambda wildcards: wildcards,
             patterns=["index.html"],
-            labels=lambda wildcards: get_dynamic_labels(wildcards),
+            labels=lambda wildcards: dict(wildcards.items()),
         ),
     log:
-        f"logs/enrichment/go_enrichment_datavzrd/{logs_goatools}.log",
+        f"logs/enrichment/go_enrichment_datavzrd/{output_goatools}.log",
     params:
         offer_excel=lookup(within=config, dpath="report/offer_excel", default=False),
     wrapper:

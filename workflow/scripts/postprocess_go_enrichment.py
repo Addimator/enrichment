@@ -2,6 +2,8 @@
 from ast import literal_eval as make_tuple
 import polars as pl
 
+sys.stderr = open(snakemake.log[0], "w")
+
 
 def calculate_enrichment(ratio_str):
     """Calculate enrichment based on ratios provided as strings."""

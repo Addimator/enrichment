@@ -1,5 +1,9 @@
 library("tidyverse")
 
+log <- file(snakemake@log[[1]], open="wt")
+sink(log)
+sink(log, type="message")
+
 get_prefix_col <- function(prefix, col_names) {
     covariate <- snakemake@params[["covariate"]]
     # add standard prefix to covariate
