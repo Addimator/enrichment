@@ -130,6 +130,6 @@ rule goatools_go_enrichment:
     conda:
         "../envs/goatools.yaml"
     log:
-        f"logs/enrichment/goatools.log",
+        "logs/enrichment/goatools_go_enrichment/{platform}_{caller}_{group}_{gene_fdr}_{go_term_fdr}.log",
     script:
         "../scripts/goatools-go-enrichment-analysis.py"
